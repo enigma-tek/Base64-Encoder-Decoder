@@ -1,0 +1,145 @@
+
+#-------------------------------------------------------------#
+#----Initial Declarations-------------------------------------#
+#-------------------------------------------------------------#
+
+Add-Type -AssemblyName PresentationCore, PresentationFramework
+
+$Xaml = @"
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" Width="800" Height="400" Title="Base64 Encoder/Decoder by enigmatek">
+<Grid Margin="-1,-1,1,1">
+<Grid.RowDefinitions>
+<RowDefinition Height="85*"/>
+<RowDefinition Height="276*"/>
+</Grid.RowDefinitions>
+ <Border BorderBrush="Black" BorderThickness="1" Name="Title_Border" Grid.Row="0" Grid.Column="0" Background="#887bc2" Margin="-1,0,1,0">
+<TextBlock HorizontalAlignment="Left" VerticalAlignment="Top" TextWrapping="Wrap" Text="Base 64 Encoder/Decoder" Margin="240,21,0,0" Name="Title_Text" FontSize="28" FontWeight="SemiBold" Width="340" Height="34" Foreground="#ffffff"/>
+</Border>
+<TextBlock HorizontalAlignment="Left" VerticalAlignment="Top" TextWrapping="Wrap" Text="Decode: Put text into the top box, hit the Decode button and the Base64 decoded text will populate in the bottom box." Margin="253.5,5.984375,0,0" Grid.Row="1" Grid.Column="0" Width="208" Height="80"/>
+<TextBlock HorizontalAlignment="Left" VerticalAlignment="Top" TextWrapping="Wrap" Text="Encode: Put text into the top box, hit the Encode button and the Base64 encoded text will populate in the bottom box." Margin="11.5,9.984375,0,0" Grid.Row="1" Grid.Column="0" Width="230" Height="71"/>
+<TextBox HorizontalAlignment="Left" VerticalAlignment="Top" Height="54" Width="220" TextWrapping="Wrap" Margin="6.5,96.984375,0,0" Grid.Row="1" Grid.Column="0" Text="{Binding encodeInput}" Name="lhfcvah7fz0pd"/>
+<TextBox HorizontalAlignment="Left" VerticalAlignment="Top" Height="61" Width="218" TextWrapping="Wrap" Margin="7.5,199.984375,0,0" Grid.Row="1" Grid.Column="0" Text="{Binding encodeOutput}" Name="lhfcvah77o4j4"/>
+<Button Content="Decode" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Margin="321.5,166.984375,0,0" Grid.Row="1" Grid.Column="0" Background="#ded8f3" Name="lhfcvah708hpg"/>
+<TextBox HorizontalAlignment="Left" VerticalAlignment="Top" Height="61" Width="208" TextWrapping="Wrap" Margin="251.5,201,0,0" Grid.Row="1" Grid.Column="0" Text="{Binding decodeOutput}" Name="lhfcvah798vl2"/>
+<TextBox HorizontalAlignment="Left" VerticalAlignment="Top" Height="54" Width="210" TextWrapping="Wrap" Margin="249.5,97.984375,0,0" Grid.Row="1" Grid.Column="0" Text="{Binding decodeInput}" Name="lhfcvah72v1eh"/>
+
+<TextBox HorizontalAlignment="Left" VerticalAlignment="Top" Height="33" Width="291" TextWrapping="Wrap" Margin="484.5,101.984375,0,0" Grid.Row="1" Grid.Column="0" Text="{Binding emailAddress}" Name="lhfcvah7uxe1s"/>
+<TextBlock HorizontalAlignment="Left" VerticalAlignment="Top" TextWrapping="Wrap" Text="Type in an email address and hit the Code button. This will take the email and choose 5 characters and turn them into a code." Margin="485.5,7.984375,0,0" Grid.Row="1" Grid.Column="0" Width="299" Height="75"/>
+<TextBox HorizontalAlignment="Left" VerticalAlignment="Top" Height="23" Width="120" TextWrapping="Wrap" Margin="563.5,211.984375,0,0" Grid.Row="1" Grid.Column="0" Text="{Binding outCode}" Name="lhfcvah7dwk84"/>
+<Button Content="Get Code" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Margin="583.5,165.984375,0,0" Grid.Row="1" Grid.Column="0" Background="#ded8f3" Name="lhfcvah76zpa2"/>
+<Button Content="Encode" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Margin="77.5,163.984375,0,0" Grid.Row="1" Grid.Column="0" Background="#ded8f3" Name="lhfcvah77052f"/>
+</Grid>
+</Window>
+"@
+
+#-------------------------------------------------------------#
+#----Control Event Handlers-----------------------------------#
+#-------------------------------------------------------------#
+
+
+#region Logic
+function encode(){
+    $encode = $State.encodeInput
+    $Text = "$($encode)"
+    $Bytes = [System.Text.Encoding]::UTF8.GetBytes($Text)
+    $EncodedText =[Convert]::ToBase64String($Bytes)
+    $State.encodeOutput = $EncodedText
+}
+
+function decode(){
+    $decode = $State.decodeInput
+    $DecodedText = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($decode))
+    $state.decodeOutput = $DecodedText
+}
+
+function get_code(){
+    $EmailAddress = $State.emailAddress
+    $Char1 = $EmailAddress.Substring(2,1)
+    $Char2 = $EmailAddress.Substring(0,1)
+    $Char3 = $EmailAddress.Substring(6,1)
+    $Char4 = $EmailAddress.Substring(3,1)
+    $Char5 = $EmailAddress.Substring(5,1)
+    $CharAll = $Char1 + $Char2 + $Char3 + $Char4 + $Char5
+    
+    $nCode = $CharAll
+    $Text = "$($nCode)"
+    $Bytes = [System.Text.Encoding]::UTF8.GetBytes($Text)
+    $EncodedText =[Convert]::ToBase64String($Bytes)
+    $State.outCode = $EncodedText
+}
+#endregion 
+
+
+#-------------------------------------------------------------#
+#----Script Execution-----------------------------------------#
+#-------------------------------------------------------------#
+
+$Window = [Windows.Markup.XamlReader]::Parse($Xaml)
+
+[xml]$xml = $Xaml
+
+$xml.SelectNodes("//*[@Name]") | ForEach-Object { Set-Variable -Name $_.Name -Value $Window.FindName($_.Name) }
+
+
+$lhfcvah708hpg.Add_Click({decode $this $_})
+$lhfcvah76zpa2.Add_Click({get_code $this $_})
+$lhfcvah77052f.Add_Click({encode $this $_})
+
+$State = [PSCustomObject]@{}
+
+
+Function Set-Binding {
+    Param($Target,$Property,$Index,$Name,$UpdateSourceTrigger)
+ 
+    $Binding = New-Object System.Windows.Data.Binding
+    $Binding.Path = "["+$Index+"]"
+    $Binding.Mode = [System.Windows.Data.BindingMode]::TwoWay
+    if($UpdateSourceTrigger -ne $null){$Binding.UpdateSourceTrigger = $UpdateSourceTrigger}
+
+
+    [void]$Target.SetBinding($Property,$Binding)
+}
+
+function FillDataContext($props){
+
+    For ($i=0; $i -lt $props.Length; $i++) {
+   
+   $prop = $props[$i]
+   $DataContext.Add($DataObject."$prop")
+   
+    $getter = [scriptblock]::Create("Write-Output `$DataContext['$i'] -noenumerate")
+    $setter = [scriptblock]::Create("param(`$val) return `$DataContext['$i']=`$val")
+    $State | Add-Member -Name $prop -MemberType ScriptProperty -Value  $getter -SecondValue $setter
+               
+       }
+   }
+
+
+
+$DataObject =  ConvertFrom-Json @"
+
+{
+    "encodeInput" : "",
+    "encodeOutput" : "",
+    "decodeInput" : "",
+    "decodeOutput" : "",
+    "emailAddress" : "",
+    "outCode" : ""
+    
+}
+
+"@
+
+$DataContext = New-Object System.Collections.ObjectModel.ObservableCollection[Object]
+FillDataContext @("encodeInput","encodeOutput","decodeInput","decodeOutput","emailAddress","outCode") 
+
+$Window.DataContext = $DataContext
+Set-Binding -Target $lhfcvah7fz0pd -Property $([System.Windows.Controls.TextBox]::TextProperty) -Index 0 -Name "encodeInput"  
+Set-Binding -Target $lhfcvah77o4j4 -Property $([System.Windows.Controls.TextBox]::TextProperty) -Index 1 -Name "encodeOutput"  
+Set-Binding -Target $lhfcvah798vl2 -Property $([System.Windows.Controls.TextBox]::TextProperty) -Index 3 -Name "decodeOutput"  
+Set-Binding -Target $lhfcvah72v1eh -Property $([System.Windows.Controls.TextBox]::TextProperty) -Index 2 -Name "decodeInput"  
+Set-Binding -Target $lhfcvah7uxe1s -Property $([System.Windows.Controls.TextBox]::TextProperty) -Index 4 -Name "emailAddress"  
+Set-Binding -Target $lhfcvah7dwk84 -Property $([System.Windows.Controls.TextBox]::TextProperty) -Index 5 -Name "outCode"  
+$Window.ShowDialog()
+
+
